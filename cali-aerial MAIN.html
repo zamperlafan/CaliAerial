@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cali.Aerial — Movement Quality Library</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#15171B;
+  --surface:#1D2026;
+  --surface-2:#252A33;
+  --surface-3:#2E3440;
+  --border:#333844;
+  --text:#ECE9E2;
+  --text-muted:#9BA0AC;
+  --text-faint:#666C79;
+  --accent:#CBA35A;
+  --accent-hover:#DCB56C;
+  --accent-ink:#2A2013;
+  --danger:#C2685E;
+  --font-display:'Space Grotesk', sans-serif;
+  --font-body:'Inter', sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);}
+#app{display:flex;height:100vh;overflow:hidden;}
+
+/* ---- Nav rail ---- */
+#navrail{
+  width:76px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:6px;
+}
+.nav-brand{font-family:var(--font-display);font-weight:700;font-size:13px;color:var(--accent);letter-spacing:.03em;margin-bottom:22px;text-align:center;line-height:1.2;}
+.nav-btn{
+  width:56px;height:56px;border:none;background:transparent;color:var(--text-muted);border-radius:10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;
+  font-family:var(--font-display);font-size:10.5px;font-weight:500;transition:background .15s, color .15s;
+}
+.nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;}
+.nav-btn:hover{background:var(--surface-2);color:var(--text);}
+.nav-btn.active{background:var(--surface-3);color:var(--accent);}
+.nav-footer{margin-top:auto;display:flex;flex-direction:column;gap:6px;padding-top:14px;border-top:1px solid var(--border);width:100%;align-items:center;}
+
+/* ---- Main ---- */
+#main{flex:1;display:flex;flex-direction:column;min-width:0;}
+#topbar{
+  padding:20px 28px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;
+  justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+#topbar h1{font-family:var(--font-display);font-size:20px;font-weight:600;margin:0;letter-spacing:.01em;}
+#topbar .subtitle{font-size:12.5px;color:var(--text-muted);margin-top:3px;}
+#saveNotice{padding:8px 28px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:11.5px;color:var(--text-muted);line-height:1.5;}
+.btn{
+  font-family:var(--font-display);font-weight:600;font-size:13px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface-2);color:var(--text);padding:9px 16px;cursor:pointer;transition:all .15s;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{background:var(--surface-3);}
+.btn-accent{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+.btn-accent:hover{background:var(--accent-hover);}
+.btn-danger{color:var(--danger);}
+.btn-danger:hover{background:rgba(194,104,94,.12);}
+.btn-ghost{background:transparent;border-color:transparent;}
+.btn-ghost:hover{background:var(--surface-2);}
+.btn-sm{padding:6px 11px;font-size:12px;}
+
+#viewroot{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+
+/* ---- Filter bar ---- */
+#filterbar{padding:14px 28px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px;}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.filter-row select, .filter-row input[type=text]{
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:6px;
+  padding:7px 10px;font-family:var(--font-body);font-size:12.5px;
+}
+.filter-row input[type=text]{min-width:200px;}
+.tag-chip{
+  font-family:var(--font-display);font-size:11.5px;font-weight:500;padding:4px 10px 4px 8px;border-radius:20px;
+  cursor:pointer;user-select:none;border:1px solid transparent;display:inline-flex;align-items:center;gap:5px;
+  color:var(--text-muted);background:var(--surface-2);transition:all .12s;
+}
+.tag-chip .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.tag-chip.active{color:var(--text);background:var(--surface-3);border-color:currentColor;}
+.tag-chip:hover{color:var(--text);}
+.tag-chip.static{cursor:default;}
+.tag-chip.removable::after{content:'×';margin-left:2px;font-size:13px;}
+.clear-filters{font-size:11.5px;color:var(--text-faint);cursor:pointer;text-decoration:underline;}
+
+/* ---- List / detail split ---- */
+.split{flex:1;display:flex;min-height:0;overflow:hidden;}
+.list-pane{width:340px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;}
+.detail-pane{flex:1;overflow-y:auto;padding:26px 32px;}
+@media(max-width:820px){
+  .split{flex-direction:column;overflow-y:auto;}
+  .list-pane{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:280px;}
+  .detail-pane{padding:20px;}
+}
+
+.row-item{
+  padding:13px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;
+}
+.row-item:hover{background:var(--surface-2);}
+.row-item.selected{background:var(--surface-3);border-left:3px solid var(--accent);padding-left:17px;}
+.row-title{font-family:var(--font-display);font-weight:600;font-size:14px;margin-bottom:5px;}
+.row-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.badge{font-size:10px;font-family:var(--font-display);font-weight:600;letter-spacing:.02em;color:var(--text-muted);
+  border:1px solid var(--border);border-radius:4px;padding:2px 6px;}
+
+.empty-state{padding:60px 30px;text-align:center;color:var(--text-faint);font-size:13.5px;line-height:1.6;}
+.empty-state strong{color:var(--text-muted);display:block;font-family:var(--font-display);font-size:15px;margin-bottom:6px;}
+
+/* ---- Detail content ---- */
+.detail-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:6px;}
+.detail-title{font-family:var(--font-display);font-size:22px;font-weight:700;}
+.detail-actions{display:flex;gap:8px;flex-shrink:0;}
+.detail-tags{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 22px;}
+.field-block{margin-bottom:20px;}
+.field-label{font-family:var(--font-display);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint);margin-bottom:6px;}
+.field-value{font-size:14px;line-height:1.65;color:var(--text);white-space:pre-wrap;}
+.field-value.muted{color:var(--text-muted);font-style:italic;}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:600px){.field-grid{grid-template-columns:1fr;}}
+.divider{height:1px;background:var(--border);margin:24px 0;}
+
+.match-list{display:flex;flex-direction:column;gap:8px;}
+.match-item{
+  display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface-2);
+  border-radius:8px;cursor:pointer;border:1px solid transparent;
+}
+.match-item:hover{border-color:var(--border);background:var(--surface-3);}
+.match-item .mname{font-family:var(--font-display);font-weight:600;font-size:13.5px;}
+.match-score{font-size:11px;color:var(--accent);font-family:var(--font-display);font-weight:600;}
+
+/* ---- Modal ---- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(10,11,13,.7);display:flex;align-items:flex-start;justify-content:center;
+  padding:4vh 20px;z-index:100;overflow-y:auto;
+}
+.modal{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:640px;
+  padding:26px 28px 28px;margin-bottom:4vh;
+}
+.modal h2{font-family:var(--font-display);font-size:19px;margin:0 0 18px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-family:var(--font-display);font-size:11.5px;font-weight:600;letter-spacing:.03em;color:var(--text-muted);margin-bottom:6px;}
+.form-group input[type=text], .form-group textarea, .form-group select{
+  width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:7px;
+  padding:9px 11px;font-family:var(--font-body);font-size:13.5px;resize:vertical;
+}
+.form-group textarea{min-height:56px;}
+.checkbox-grid{display:flex;flex-wrap:wrap;gap:7px;}
+.check-chip{
+  font-family:var(--font-display);font-size:12px;font-weight:500;padding:6px 11px;border-radius:7px;
+  border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);cursor:pointer;user-select:none;
+}
+.check-chip.checked{background:var(--surface-3);color:var(--text);border-color:var(--accent);}
+.tag-group-label{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 6px;font-family:var(--font-display);}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:560px){.two-col{grid-template-columns:1fr;}}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+
+.session-ex-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface-2);border-radius:8px;margin-bottom:8px;}
+.session-ex-row .sname{font-family:var(--font-display);font-weight:600;font-size:13.5px;}
+
+.loading-screen{display:flex;align-items:center;justify-content:center;height:100vh;color:var(--text-muted);font-family:var(--font-display);font-size:13px;}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading-screen">Loading library…</div></div>
+
+<script>
+/* ===================== DATA MODEL ===================== */
+const TAGS = [
+  {id:'push', label:'Pushing', group:'load', color:'#C97B4A'},
+  {id:'pull', label:'Pulling', group:'load', color:'#4A8FA8'},
+  {id:'compression', label:'Compression', group:'load', color:'#8C5A9E'},
+  {id:'extension', label:'Extension', group:'load', color:'#A98B3E'},
+  {id:'core', label:'Core & Body Control', group:'control', color:'#5E9E5A'},
+  {id:'joint', label:'Joint Stability', group:'control', color:'#6E7BC9'},
+  {id:'unilateral', label:'Unilateral Strength', group:'control', color:'#C96E8C'},
+  {id:'scapular', label:'Scapular Control', group:'control', color:'#3FA98F'},
+  {id:'shoulder', label:'Shoulder Control', group:'control', color:'#C9954A'},
+  {id:'hip', label:'Hip Control', group:'control', color:'#9152C9'},
+  {id:'spinal', label:'Spinal Control', group:'control', color:'#4AA8C9'},
+  {id:'flexibility', label:'Active Flexibility', group:'quality', color:'#7CAE45'},
+  {id:'transitions', label:'Transitions & Pathways', group:'quality', color:'#AA9640'},
+  {id:'momentum', label:'Momentum Control', group:'quality', color:'#C25E5E'},
+  {id:'micro', label:'Micro-Adjustments', group:'quality', color:'#5E8FC2'},
+  {id:'efficiency', label:'Movement Efficiency', group:'quality', color:'#9E8F6E'},
+  {id:'flow', label:'Flow & Continuity', group:'quality', color:'#9E5E9E'},
+];
+const TAG_GROUPS = [
+  {id:'load', label:'Base Load Pattern'},
+  {id:'control', label:'Control & Stability'},
+  {id:'quality', label:'Movement Quality'},
+];
+const EQUIPMENT = ['Bodyweight','Rings','Parallettes','Resistance Band','Aerial Apparatus','Pulley / Cable','Free Weight','Wall','Partner-Assisted'];
+const APPARATUS = ['Silks','Hammock / Sling','Straps','Hoop / Lyra','Rope','Trapeze','Pole','Cross-Apparatus'];
+const DIFFICULTIES = ['Foundation','Developing','Proficient','Advanced'];
+
+function tagById(id){ return TAGS.find(t=>t.id===id); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+
+const SEED_EXERCISES = [
+  {id:uid(), name:'Scapular CARs (Wall-Supported)', tags:['scapular','joint'], equipment:['Bodyweight','Wall'],
+    apparatus:['Cross-Apparatus'], difficulty:'Foundation',
+    purpose:'Builds active control of the shoulder blade through its full range, independent of the arm, so the shoulder girdle stops moving as a passive passenger.',
+    feel:'Slow, controlled circles that stay smooth. The shoulder should feel like it is drawing the circle, not being dragged by the ribcage or upper traps.',
+    compensations:'Shrugging the traps, flaring the ribcage to fake range, rushing through the bottom of the circle where control usually breaks down.',
+    transfer:'Cleaner scapular positioning in inversions, extensions, and any overhead line — reduces the "collapsed shoulder" look in silks and hammock shapes.',
+    progression:'Progresses to: Scapular CARs on rings (unsupported) → Scapular pull-up holds.',
+    regression:'Regresses from: seated scapular retraction/protraction drill.',
+    notes:''},
+  {id:uid(), name:'Tuck to Straddle Compression Hold', tags:['compression','core','flexibility'], equipment:['Bodyweight','Rings'],
+    apparatus:['Silks','Hammock / Sling'], difficulty:'Developing',
+    purpose:'Develops the compressed hip-flexor and lower-ab strength needed to hold a closed shape without gripping the apparatus for support.',
+    feel:'The hold should feel like the ribs and hips are pulling toward each other, not like the arms are propping the shape up.',
+    compensations:'Rounding through the upper back instead of the hips, letting shoulders creep up, holding the breath instead of breathing within the hold.',
+    transfer:'Directly builds the compression needed for straddle inversions, held tucks, and shape transitions where the line has to stay closed and clean without leaking energy.',
+    progression:'Progresses to: Open straddle compression hold → Compression hold with slow leg extension.',
+    regression:'Regresses from: supported tuck hold with feet on a block.',
+    notes:''},
+  {id:uid(), name:'Single-Arm Scap Pull-Up Progression', tags:['pull','unilateral','scapular'], equipment:['Rings','Aerial Apparatus'],
+    apparatus:['Straps','Rope'], difficulty:'Advanced',
+    purpose:'Builds unilateral pulling strength and scapular control together, which is what most single-arm transitions actually demand rather than raw bicep strength.',
+    feel:'Initiation should come from the shoulder blade setting first, then the pull — not from yanking with the arm.',
+    compensations:'Hiking the shoulder toward the ear, twisting the torso to cheat the pull, losing scapular set at the top of the movement.',
+    transfer:'Carries directly into single-arm straps sequences and asymmetrical strength positions where one side has to fully own the load.',
+    progression:'Progresses to: single-arm pull-up.',
+    regression:'Regresses from: assisted single-arm scap pull (band or partner support).',
+    notes:''},
+];
+const SEED_GOALS = [
+  {id:uid(), name:'Straddle Inversion', apparatus:'Silks', tags:['compression','core','flexibility'],
+    limiter:'Shape opens and hips drop mid-inversion — she can get upside down but loses the line the moment she has to hold it.',
+    notes:'Should eventually look weightless, not gripped.'},
+  {id:uid(), name:'Single-Arm Meathook', apparatus:'Straps', tags:['pull','unilateral','scapular','shoulder'],
+    limiter:'Compensates by twisting through the torso instead of loading the working shoulder cleanly.', notes:''},
+];
+
+/* ===================== STATE ===================== */
+let state = {
+  exercises: [], goals: [], sessions: [],
+  view: 'library',
+  selectedExerciseId: null, selectedGoalId: null, selectedSessionId: null,
+  filters: { tags: new Set(), equipment: '', difficulty: '', search: '' },
+};
+
+/* ===================== STORAGE (IndexedDB, with localStorage fallback) ===================== */
+const DB_NAME = 'cali-aerial-db';
+const DB_STORE = 'kv';
+let dbPromise = null;
+
+function openDB(){
+  if(dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject)=>{
+    if(!window.indexedDB){ reject(new Error('IndexedDB unavailable')); return; }
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e)=>{
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+    };
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+    req.onblocked = ()=> reject(new Error('IndexedDB blocked'));
+  });
+  return dbPromise;
+}
+async function idbGet(key){
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).get(key);
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+async function idbSet(key, value){
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(value, key);
+    tx.oncomplete = ()=> resolve(true);
+    tx.onerror = ()=> reject(tx.error);
+  });
+}
+
+// localStorage fallback for environments without IndexedDB (older WebViews, some restricted embedded viewers)
+function lsGet(key){
+  try{ const raw = localStorage.getItem('cali-aerial:'+key); return raw ? JSON.parse(raw) : undefined; }
+  catch(e){ return undefined; }
+}
+function lsSet(key, value){
+  try{ localStorage.setItem('cali-aerial:'+key, JSON.stringify(value)); return true; }
+  catch(e){ return false; }
+}
+
+async function loadAll(){
+  state.exercises = await loadKey('exercises', SEED_EXERCISES);
+  state.goals = await loadKey('goals', SEED_GOALS);
+  state.sessions = await loadKey('sessions', []);
+}
+async function loadKey(key, fallback){
+  try{
+    const val = await idbGet(key);
+    if(val !== undefined && val !== null) return val;
+    return fallback;
+  }catch(e){
+    const fromLs = lsGet(key);
+    return fromLs !== undefined ? fromLs : fallback;
+  }
+}
+async function persist(key, value){
+  try{ await idbSet(key, value); }
+  catch(e){ lsSet(key, value); }
+}
+async function saveExercises(){ await persist('exercises', state.exercises); }
+async function saveGoals(){ await persist('goals', state.goals); }
+async function saveSessions(){ await persist('sessions', state.sessions); }
+
+/* ===================== FILE EXPORT / IMPORT ===================== */
+function exportData(){
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    exercises: state.exercises,
+    goals: state.goals,
+    sessions: state.sessions,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `cali-aerial-library-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+function handleImportFile(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      const exCount = Array.isArray(data.exercises) ? data.exercises.length : 0;
+      const goalCount = Array.isArray(data.goals) ? data.goals.length : 0;
+      const sessCount = Array.isArray(data.sessions) ? data.sessions.length : 0;
+      const ok = confirm(`Import ${exCount} exercise(s), ${goalCount} goal(s), and ${sessCount} session(s)?\n\nThis replaces what's currently loaded in the app.`);
+      if(!ok){ e.target.value=''; return; }
+      state.exercises = Array.isArray(data.exercises) ? data.exercises : [];
+      state.goals = Array.isArray(data.goals) ? data.goals : [];
+      state.sessions = Array.isArray(data.sessions) ? data.sessions : [];
+      state.selectedExerciseId = null; state.selectedGoalId = null; state.selectedSessionId = null;
+      saveExercises(); saveGoals(); saveSessions();
+      renderAll();
+    }catch(err){
+      alert("That file couldn't be read as a Cali.Aerial export. Make sure you selected the right .json backup file.");
+    }
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+/* ===================== ICONS ===================== */
+const ICONS = {
+  library:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+  goals:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.7" fill="currentColor"/></svg>',
+  sessions:'<svg viewBox="0 0 24 24"><path d="M8 3h8a1 1 0 0 1 1 1v16l-5-3-5 3V4a1 1 0 0 1 1-1z"/></svg>',
+  exportIcon:'<svg viewBox="0 0 24 24"><path d="M12 3v11m0 0l-4-4m4 4l4-4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>',
+  importIcon:'<svg viewBox="0 0 24 24"><path d="M12 20V9m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>',
+};
+
+/* ===================== RENDER SHELL ===================== */
+function renderShell(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div id="navrail">
+      <div class="nav-brand">CALI.<br/>AERIAL</div>
+      <button class="nav-btn" data-nav="library">${ICONS.library}Library</button>
+      <button class="nav-btn" data-nav="goals">${ICONS.goals}Goals</button>
+      <button class="nav-btn" data-nav="sessions">${ICONS.sessions}Sessions</button>
+      <div class="nav-footer">
+        <button class="nav-btn" id="btnExport" title="Save your library to a file">${ICONS.exportIcon}Export</button>
+        <button class="nav-btn" id="btnImport" title="Load a previously exported file">${ICONS.importIcon}Import</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      </div>
+    </div>
+    <div id="main">
+      <div id="topbar">
+        <div>
+          <h1 id="viewTitle"></h1>
+          <div class="subtitle" id="viewSubtitle"></div>
+        </div>
+        <div id="topbarActions"></div>
+      </div>
+      <div id="saveNotice">Your changes save automatically in this browser. If you move, rename, or share this file, or switch devices, use <strong>Export</strong> to back it up and <strong>Import</strong> to bring it with you.</div>
+      <div id="viewroot"></div>
+    </div>
+    <div id="modalHost"></div>
+  `;
+  document.querySelectorAll('.nav-btn[data-nav]').forEach(b=>{
+    b.addEventListener('click', ()=>{ state.view=b.dataset.nav; renderAll(); });
+  });
+  document.getElementById('btnExport').addEventListener('click', exportData);
+  document.getElementById('btnImport').addEventListener('click', ()=> document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', handleImportFile);
+  renderAll();
+}
+
+function renderAll(){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.nav===state.view));
+  if(state.view==='library') renderLibrary();
+  else if(state.view==='goals') renderGoals();
+  else if(state.view==='sessions') renderSessionsView();
+}
+
+/* ===================== TAG CHIP HELPERS ===================== */
+function chipHTML(tagId, opts){
+  opts = opts||{};
+  const t = tagById(tagId);
+  if(!t) return '';
+  const active = opts.active ? 'active' : '';
+  const cls = (opts.staticChip? 'static ' : '') + (opts.removable ? 'removable ':'') + active;
+  return `<span class="tag-chip ${cls}" data-tag="${tagId}" style="color:${opts.active||opts.staticChip? t.color:'inherit'}">
+    <span class="dot" style="background:${t.color}"></span>${t.label}</span>`;
+}
+function tagGroupPicker(selectedIds, containerIdPrefix){
+  return TAG_GROUPS.map(g=>{
+    const tagsInGroup = TAGS.filter(t=>t.group===g.id);
+    return `<div class="tag-group-label">${g.label}</div>
+      <div class="checkbox-grid" data-taggroup="${containerIdPrefix}">
+        ${tagsInGroup.map(t=>`<span class="check-chip ${selectedIds.includes(t.id)?'checked':''}" data-tagcheck="${t.id}">${t.label}</span>`).join('')}
+      </div>`;
+  }).join('');
+}
+function equipmentPicker(selected, name){
+  return `<div class="checkbox-grid" data-equipgroup="${name}">
+    ${EQUIPMENT.map(e=>`<span class="check-chip ${selected.includes(e)?'checked':''}" data-equipcheck="${e}">${e}</span>`).join('')}
+  </div>`;
+}
+function apparatusPicker(selected, name){
+  return `<div class="checkbox-grid" data-appgroup="${name}">
+    ${APPARATUS.map(a=>`<span class="check-chip ${selected.includes(a)?'checked':''}" data-appcheck="${a}">${a}</span>`).join('')}
+  </div>`;
+}
+
+/* ===================== LIBRARY VIEW ===================== */
+function renderLibrary(){
+  document.getElementById('viewTitle').textContent = 'Exercise Library';
+  document.getElementById('viewSubtitle').textContent = `${state.exercises.length} exercise${state.exercises.length===1?'':'s'} tagged by physical quality`;
+  document.getElementById('topbarActions').innerHTML = `<button class="btn btn-accent" id="btnAddExercise">+ Add Exercise</button>`;
+  document.getElementById('btnAddExercise').addEventListener('click', ()=>openExerciseModal(null));
+
+  const filtered = filterExercises();
+  const root = document.getElementById('viewroot');
+  root.innerHTML = `
+    <div id="filterbar">
+      <div class="filter-row">
+        ${TAG_GROUPS.map(g=>TAGS.filter(t=>t.group===g.id).map(t=>chipHTML(t.id,{active:state.filters.tags.has(t.id)})).join('')).join('')}
+        ${state.filters.tags.size||state.filters.equipment||state.filters.difficulty||state.filters.search ? '<span class="clear-filters" id="clearFilters">clear filters</span>' : ''}
+      </div>
+      <div class="filter-row">
+        <input type="text" id="searchInput" placeholder="Search name, purpose, apparatus…" value="${escapeAttr(state.filters.search)}">
+        <select id="equipFilter"><option value="">Any equipment</option>${EQUIPMENT.map(e=>`<option ${state.filters.equipment===e?'selected':''}>${e}</option>`).join('')}</select>
+        <select id="diffFilter"><option value="">Any difficulty</option>${DIFFICULTIES.map(d=>`<option ${state.filters.difficulty===d?'selected':''}>${d}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="split">
+      <div class="list-pane" id="exList"></div>
+      <div class="detail-pane" id="exDetail"></div>
+    </div>
+  `;
+  document.querySelectorAll('#filterbar .tag-chip').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const id = el.dataset.tag;
+      if(state.filters.tags.has(id)) state.filters.tags.delete(id); else state.filters.tags.add(id);
+      renderLibrary();
+    });
+  });
+  const clearBtn = document.getElementById('clearFilters');
+  if(clearBtn) clearBtn.addEventListener('click', ()=>{ state.filters={tags:new Set(),equipment:'',difficulty:'',search:''}; renderLibrary(); });
+  document.getElementById('searchInput').addEventListener('input', e=>{ state.filters.search=e.target.value; renderLibraryListOnly(); });
+  document.getElementById('equipFilter').addEventListener('change', e=>{ state.filters.equipment=e.target.value; renderLibraryListOnly(); });
+  document.getElementById('diffFilter').addEventListener('change', e=>{ state.filters.difficulty=e.target.value; renderLibraryListOnly(); });
+
+  renderExerciseList(filtered);
+  renderExerciseDetail();
+}
+function renderLibraryListOnly(){ renderExerciseList(filterExercises()); }
+
+function filterExercises(){
+  return state.exercises.filter(ex=>{
+    if(state.filters.tags.size && ![...state.filters.tags].every(t=>ex.tags.includes(t))) return false;
+    if(state.filters.equipment && !ex.equipment.includes(state.filters.equipment)) return false;
+    if(state.filters.difficulty && ex.difficulty!==state.filters.difficulty) return false;
+    if(state.filters.search){
+      const q = state.filters.search.toLowerCase();
+      const hay = [ex.name, ex.purpose, ex.transfer, (ex.apparatus||[]).join(' ')].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function renderExerciseList(list){
+  const el = document.getElementById('exList');
+  if(!list.length){ el.innerHTML = `<div class="empty-state">No exercises match these filters.</div>`; return; }
+  el.innerHTML = list.map(ex=>`
+    <div class="row-item ${ex.id===state.selectedExerciseId?'selected':''}" data-id="${ex.id}">
+      <div class="row-title">${escapeHTML(ex.name)}</div>
+      <div class="row-meta"><span class="badge">${ex.difficulty}</span>${ex.tags.slice(0,3).map(t=>chipHTML(t,{staticChip:true})).join('')}</div>
+    </div>`).join('');
+  el.querySelectorAll('.row-item').forEach(r=>r.addEventListener('click', ()=>{ state.selectedExerciseId=r.dataset.id; renderExerciseList(filterExercises()); renderExerciseDetail(); }));
+}
+function renderExerciseDetail(){
+  const el = document.getElementById('exDetail');
+  const ex = state.exercises.find(e=>e.id===state.selectedExerciseId);
+  if(!ex){ el.innerHTML = `<div class="empty-state"><strong>Select an exercise</strong>Pick one from the list, or add a new one to start tagging your library.</div>`; return; }
+  el.innerHTML = `
+    <div class="detail-header">
+      <div class="detail-title">${escapeHTML(ex.name)}</div>
+      <div class="detail-actions">
+        <button class="btn btn-sm" id="btnEditEx">Edit</button>
+        <button class="btn btn-sm btn-danger" id="btnDelEx">Delete</button>
+      </div>
+    </div>
+    <div class="detail-tags">${ex.tags.map(t=>chipHTML(t,{active:true})).join('')}
+      <span class="badge">${ex.difficulty}</span>
+      ${ex.equipment.map(e=>`<span class="badge">${e}</span>`).join('')}
+    </div>
+    <div class="field-grid">
+      <div class="field-block"><div class="field-label">Aerial Relevance</div><div class="field-value ${!ex.apparatus||!ex.apparatus.length?'muted':''}">${ex.apparatus&&ex.apparatus.length?ex.apparatus.join(', '):'Not specified'}</div></div>
+      <div class="field-block"><div class="field-label">Difficulty</div><div class="field-value">${ex.difficulty}</div></div>
+    </div>
+    <div class="field-block"><div class="field-label">What This Develops</div><div class="field-value">${escapeHTML(ex.purpose)||'—'}</div></div>
+    <div class="field-block"><div class="field-label">What The Athlete Should Feel</div><div class="field-value">${escapeHTML(ex.feel)||'—'}</div></div>
+    <div class="field-block"><div class="field-label">Common Compensations</div><div class="field-value">${escapeHTML(ex.compensations)||'—'}</div></div>
+    <div class="field-block"><div class="field-label">Transfer To The Apparatus</div><div class="field-value">${escapeHTML(ex.transfer)||'—'}</div></div>
+    <div class="field-grid">
+      <div class="field-block"><div class="field-label">Progression</div><div class="field-value ${!ex.progression?'muted':''}">${escapeHTML(ex.progression)||'None recorded'}</div></div>
+      <div class="field-block"><div class="field-label">Regression</div><div class="field-value ${!ex.regression?'muted':''}">${escapeHTML(ex.regression)||'None recorded'}</div></div>
+    </div>
+    ${ex.notes?`<div class="field-block"><div class="field-label">Notes</div><div class="field-value">${escapeHTML(ex.notes)}</div></div>`:''}
+    <div class="divider"></div>
+    <div class="field-block">
+      <div class="field-label">Add To A Session</div>
+      <select id="addToSessionSelect">
+        <option value="">Choose a session…</option>
+        ${state.sessions.map(s=>`<option value="${s.id}">${escapeHTML(s.name)}</option>`).join('')}
+        <option value="__new">+ New session</option>
+      </select>
+    </div>
+  `;
+  document.getElementById('btnEditEx').addEventListener('click', ()=>openExerciseModal(ex));
+  document.getElementById('btnDelEx').addEventListener('click', ()=>{
+    if(confirm(`Delete "${ex.name}"? This can't be undone.`)){
+      state.exercises = state.exercises.filter(e=>e.id!==ex.id);
+      state.selectedExerciseId = null;
+      saveExercises(); renderLibrary();
+    }
+  });
+  document.getElementById('addToSessionSelect').addEventListener('change', async (e)=>{
+    let sid = e.target.value;
+    if(!sid) return;
+    if(sid==='__new'){
+      const name = prompt('Name this session:');
+      if(!name){ renderExerciseDetail(); return; }
+      const s = {id:uid(), name, exerciseIds:[], notes:''};
+      state.sessions.push(s); sid = s.id;
+    }
+    const session = state.sessions.find(s=>s.id===sid);
+    if(session && !session.exerciseIds.includes(ex.id)) session.exerciseIds.push(ex.id);
+    await saveSessions();
+    renderExerciseDetail();
+  });
+}
+
+/* ===================== EXERCISE MODAL ===================== */
+function openExerciseModal(existing){
+  const isEdit = !!existing;
+  const ex = existing || {id:uid(), name:'', tags:[], equipment:[], apparatus:[], difficulty:DIFFICULTIES[0],
+    purpose:'', feel:'', compensations:'', transfer:'', progression:'', regression:'', notes:''};
+  const host = document.getElementById('modalHost');
+  host.innerHTML = `
+  <div class="modal-overlay" id="exOverlay">
+    <div class="modal">
+      <h2>${isEdit?'Edit Exercise':'Add Exercise'}</h2>
+      <div class="form-group"><label>Name</label><input type="text" id="fName" value="${escapeAttr(ex.name)}" placeholder="e.g. Scapular CARs"></div>
+      <div class="form-group"><label>Physical Qualities (tag all that apply)</label>${tagGroupPicker(ex.tags,'ex')}</div>
+      <div class="two-col">
+        <div class="form-group"><label>Difficulty</label>
+          <select id="fDifficulty">${DIFFICULTIES.map(d=>`<option ${ex.difficulty===d?'selected':''}>${d}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label>Equipment</label>${equipmentPicker(ex.equipment,'ex')}</div>
+      </div>
+      <div class="form-group"><label>Aerial Relevance (apparatus this applies to)</label>${apparatusPicker(ex.apparatus||[],'ex')}</div>
+      <div class="form-group"><label>What This Develops</label><textarea id="fPurpose" placeholder="The underlying quality or capacity this builds">${escapeHTML(ex.purpose)}</textarea></div>
+      <div class="form-group"><label>What The Athlete Should Feel / Control</label><textarea id="fFeel">${escapeHTML(ex.feel)}</textarea></div>
+      <div class="form-group"><label>Common Compensations</label><textarea id="fCompensations">${escapeHTML(ex.compensations)}</textarea></div>
+      <div class="form-group"><label>How It Transfers To The Apparatus</label><textarea id="fTransfer">${escapeHTML(ex.transfer)}</textarea></div>
+      <div class="two-col">
+        <div class="form-group"><label>Progresses To</label><input type="text" id="fProgression" value="${escapeAttr(ex.progression)}" placeholder="Next step up"></div>
+        <div class="form-group"><label>Regresses From</label><input type="text" id="fRegression" value="${escapeAttr(ex.regression)}" placeholder="Easier variation"></div>
+      </div>
+      <div class="form-group"><label>Notes</label><textarea id="fNotes">${escapeHTML(ex.notes)}</textarea></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="cancelEx">Cancel</button>
+        <button class="btn btn-accent" id="saveEx">Save Exercise</button>
+      </div>
+    </div>
+  </div>`;
+  wireCheckChips(host);
+  document.getElementById('cancelEx').addEventListener('click', closeModal);
+  document.getElementById('exOverlay').addEventListener('click', (e)=>{ if(e.target.id==='exOverlay') closeModal(); });
+  document.getElementById('saveEx').addEventListener('click', async ()=>{
+    const name = document.getElementById('fName').value.trim();
+    if(!name){ alert('Give this exercise a name first.'); return; }
+    ex.name = name;
+    ex.tags = getCheckedValues(host,'[data-tagcheck]','tagcheck');
+    ex.equipment = getCheckedValues(host,'[data-equipcheck]','equipcheck');
+    ex.apparatus = getCheckedValues(host,'[data-appcheck]','appcheck');
+    ex.difficulty = document.getElementById('fDifficulty').value;
+    ex.purpose = document.getElementById('fPurpose').value;
+    ex.feel = document.getElementById('fFeel').value;
+    ex.compensations = document.getElementById('fCompensations').value;
+    ex.transfer = document.getElementById('fTransfer').value;
+    ex.progression = document.getElementById('fProgression').value;
+    ex.regression = document.getElementById('fRegression').value;
+    ex.notes = document.getElementById('fNotes').value;
+    if(!isEdit) state.exercises.push(ex);
+    await saveExercises();
+    state.selectedExerciseId = ex.id;
+    closeModal();
+    renderLibrary();
+  });
+}
+
+/* ===================== GOALS VIEW ===================== */
+function renderGoals(){
+  document.getElementById('viewTitle').textContent = 'Aerial Goals';
+  document.getElementById('viewSubtitle').textContent = `Skills and movement problems mapped to the qualities that solve them`;
+  document.getElementById('topbarActions').innerHTML = `<button class="btn btn-accent" id="btnAddGoal">+ Add Goal</button>`;
+  document.getElementById('btnAddGoal').addEventListener('click', ()=>openGoalModal(null));
+
+  const root = document.getElementById('viewroot');
+  root.innerHTML = `<div class="split">
+      <div class="list-pane" id="goalList"></div>
+      <div class="detail-pane" id="goalDetail"></div>
+    </div>`;
+  renderGoalList();
+  renderGoalDetail();
+}
+function renderGoalList(){
+  const el = document.getElementById('goalList');
+  if(!state.goals.length){ el.innerHTML = `<div class="empty-state">No goals yet. Add the skill or movement problem you're solving for.</div>`; return; }
+  el.innerHTML = state.goals.map(g=>`
+    <div class="row-item ${g.id===state.selectedGoalId?'selected':''}" data-id="${g.id}">
+      <div class="row-title">${escapeHTML(g.name)}</div>
+      <div class="row-meta">${g.apparatus?`<span class="badge">${escapeHTML(g.apparatus)}</span>`:''}${g.tags.slice(0,2).map(t=>chipHTML(t,{staticChip:true})).join('')}</div>
+    </div>`).join('');
+  el.querySelectorAll('.row-item').forEach(r=>r.addEventListener('click', ()=>{ state.selectedGoalId=r.dataset.id; renderGoalList(); renderGoalDetail(); }));
+}
+function renderGoalDetail(){
+  const el = document.getElementById('goalDetail');
+  const g = state.goals.find(x=>x.id===state.selectedGoalId);
+  if(!g){ el.innerHTML = `<div class="empty-state"><strong>Select a goal</strong>Pick a skill or movement problem to see which exercises address it.</div>`; return; }
+  const matches = state.exercises
+    .map(ex=>({ex, score: ex.tags.filter(t=>g.tags.includes(t)).length}))
+    .filter(m=>m.score>0)
+    .sort((a,b)=>b.score-a.score);
+  el.innerHTML = `
+    <div class="detail-header">
+      <div class="detail-title">${escapeHTML(g.name)}</div>
+      <div class="detail-actions">
+        <button class="btn btn-sm" id="btnEditGoal">Edit</button>
+        <button class="btn btn-sm btn-danger" id="btnDelGoal">Delete</button>
+      </div>
+    </div>
+    <div class="detail-tags">${g.apparatus?`<span class="badge">${escapeHTML(g.apparatus)}</span>`:''}${g.tags.map(t=>chipHTML(t,{active:true})).join('')}</div>
+    <div class="field-block"><div class="field-label">Current Limiter</div><div class="field-value ${!g.limiter?'muted':''}">${escapeHTML(g.limiter)||'Not recorded yet'}</div></div>
+    ${g.notes?`<div class="field-block"><div class="field-label">Notes</div><div class="field-value">${escapeHTML(g.notes)}</div></div>`:''}
+    <div class="divider"></div>
+    <div class="field-label" style="margin-bottom:10px;">Matched Exercises (by shared quality tags)</div>
+    <div class="match-list">
+      ${matches.length? matches.map(m=>`<div class="match-item" data-id="${m.ex.id}"><span class="mname">${escapeHTML(m.ex.name)}</span><span class="match-score">${m.score} shared tag${m.score===1?'':'s'}</span></div>`).join('')
+        : `<div class="empty-state" style="padding:20px 0;">No exercises share a tag with this goal yet. Tag some exercises with ${g.tags.map(t=>tagById(t)?.label).join(', ')||'the required qualities'} to see matches here.</div>`}
+    </div>
+  `;
+  document.getElementById('btnEditGoal').addEventListener('click', ()=>openGoalModal(g));
+  document.getElementById('btnDelGoal').addEventListener('click', ()=>{
+    if(confirm(`Delete "${g.name}"?`)){
+      state.goals = state.goals.filter(x=>x.id!==g.id);
+      state.selectedGoalId = null;
+      saveGoals(); renderGoals();
+    }
+  });
+  el.querySelectorAll('.match-item').forEach(m=>m.addEventListener('click', ()=>{
+    state.selectedExerciseId = m.dataset.id;
+    state.view = 'library';
+    renderShellKeepingData();
+  }));
+}
+function renderShellKeepingData(){ renderAll(); document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.nav===state.view)); }
+
+function openGoalModal(existing){
+  const isEdit = !!existing;
+  const g = existing || {id:uid(), name:'', apparatus:'', tags:[], limiter:'', notes:''};
+  const host = document.getElementById('modalHost');
+  host.innerHTML = `
+  <div class="modal-overlay" id="goalOverlay">
+    <div class="modal">
+      <h2>${isEdit?'Edit Goal':'Add Aerial Goal'}</h2>
+      <div class="form-group"><label>Skill / Movement Goal</label><input type="text" id="gName" value="${escapeAttr(g.name)}" placeholder="e.g. Straddle Inversion"></div>
+      <div class="form-group"><label>Apparatus</label>
+        <select id="gApparatus"><option value="">—</option>${APPARATUS.map(a=>`<option ${g.apparatus===a?'selected':''}>${a}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Physical Qualities Required</label>${tagGroupPicker(g.tags,'goal')}</div>
+      <div class="form-group"><label>What's Currently Limiting It</label><textarea id="gLimiter">${escapeHTML(g.limiter)}</textarea></div>
+      <div class="form-group"><label>Notes</label><textarea id="gNotes">${escapeHTML(g.notes)}</textarea></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="cancelGoal">Cancel</button>
+        <button class="btn btn-accent" id="saveGoal">Save Goal</button>
+      </div>
+    </div>
+  </div>`;
+  wireCheckChips(host);
+  document.getElementById('cancelGoal').addEventListener('click', closeModal);
+  document.getElementById('goalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='goalOverlay') closeModal(); });
+  document.getElementById('saveGoal').addEventListener('click', async ()=>{
+    const name = document.getElementById('gName').value.trim();
+    if(!name){ alert('Name this goal first.'); return; }
+    g.name = name;
+    g.apparatus = document.getElementById('gApparatus').value;
+    g.tags = getCheckedValues(host,'[data-tagcheck]','tagcheck');
+    g.limiter = document.getElementById('gLimiter').value;
+    g.notes = document.getElementById('gNotes').value;
+    if(!isEdit) state.goals.push(g);
+    await saveGoals();
+    state.selectedGoalId = g.id;
+    closeModal();
+    renderGoals();
+  });
+}
+
+/* ===================== SESSIONS VIEW ===================== */
+function renderSessionsView(){
+  document.getElementById('viewTitle').textContent = 'Sessions';
+  document.getElementById('viewSubtitle').textContent = 'Assembled from library modules for a specific aerialist or class';
+  document.getElementById('topbarActions').innerHTML = `<button class="btn btn-accent" id="btnAddSession">+ New Session</button>`;
+  document.getElementById('btnAddSession').addEventListener('click', async ()=>{
+    const name = prompt('Name this session:');
+    if(!name) return;
+    const s = {id:uid(), name, exerciseIds:[], notes:''};
+    state.sessions.push(s);
+    state.selectedSessionId = s.id;
+    await saveSessions();
+    renderSessionsView();
+  });
+
+  const root = document.getElementById('viewroot');
+  root.innerHTML = `<div class="split">
+      <div class="list-pane" id="sessList"></div>
+      <div class="detail-pane" id="sessDetail"></div>
+    </div>`;
+  renderSessionList();
+  renderSessionDetail();
+}
+function renderSessionList(){
+  const el = document.getElementById('sessList');
+  if(!state.sessions.length){ el.innerHTML = `<div class="empty-state">No sessions yet. Build one from exercises in the Library.</div>`; return; }
+  el.innerHTML = state.sessions.map(s=>`
+    <div class="row-item ${s.id===state.selectedSessionId?'selected':''}" data-id="${s.id}">
+      <div class="row-title">${escapeHTML(s.name)}</div>
+      <div class="row-meta"><span class="badge">${s.exerciseIds.length} exercise${s.exerciseIds.length===1?'':'s'}</span></div>
+    </div>`).join('');
+  el.querySelectorAll('.row-item').forEach(r=>r.addEventListener('click', ()=>{ state.selectedSessionId=r.dataset.id; renderSessionList(); renderSessionDetail(); }));
+}
+function renderSessionDetail(){
+  const el = document.getElementById('sessDetail');
+  const s = state.sessions.find(x=>x.id===state.selectedSessionId);
+  if(!s){ el.innerHTML = `<div class="empty-state"><strong>Select a session</strong>Or start a new one and pull exercises in from the Library.</div>`; return; }
+  const exList = s.exerciseIds.map(id=>state.exercises.find(e=>e.id===id)).filter(Boolean);
+  el.innerHTML = `
+    <div class="detail-header">
+      <div class="detail-title">${escapeHTML(s.name)}</div>
+      <div class="detail-actions"><button class="btn btn-sm btn-danger" id="btnDelSession">Delete Session</button></div>
+    </div>
+    <div class="field-block" style="margin-bottom:16px;">
+      ${exList.length? exList.map(ex=>`
+        <div class="session-ex-row" data-id="${ex.id}">
+          <span class="sname">${escapeHTML(ex.name)}</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            ${ex.tags.slice(0,2).map(t=>chipHTML(t,{staticChip:true})).join('')}
+            <button class="btn btn-sm btn-ghost remove-from-session" data-id="${ex.id}">Remove</button>
+          </div>
+        </div>`).join('')
+      : `<div class="empty-state" style="padding:16px 0;">Empty so far. Go to Library and use "Add to a session" on any exercise.</div>`}
+    </div>
+  `;
+  document.getElementById('btnDelSession').addEventListener('click', ()=>{
+    if(confirm(`Delete session "${s.name}"?`)){
+      state.sessions = state.sessions.filter(x=>x.id!==s.id);
+      state.selectedSessionId = null;
+      saveSessions(); renderSessionsView();
+    }
+  });
+  el.querySelectorAll('.remove-from-session').forEach(btn=>btn.addEventListener('click', async ()=>{
+    s.exerciseIds = s.exerciseIds.filter(id=>id!==btn.dataset.id);
+    await saveSessions();
+    renderSessionDetail(); renderSessionList();
+  }));
+}
+
+/* ===================== SHARED MODAL HELPERS ===================== */
+function closeModal(){ document.getElementById('modalHost').innerHTML=''; }
+function wireCheckChips(host){
+  host.querySelectorAll('.check-chip').forEach(chip=>{
+    chip.addEventListener('click', ()=> chip.classList.toggle('checked'));
+  });
+}
+function getCheckedValues(host, selector, attr){
+  return [...host.querySelectorAll(selector+'.checked')].map(el=>el.dataset[attr]);
+}
+function escapeHTML(str){ if(str===undefined||str===null) return ''; return String(str).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function escapeAttr(str){ return escapeHTML(str).replace(/"/g,'&quot;'); }
+
+/* ===================== INIT ===================== */
+(async function init(){
+  await loadAll();
+  renderShell();
+})();
+</script>
+</body>
+</html>
