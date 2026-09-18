@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cali.Aerial — Movement Quality Library</title>
@@ -168,7 +166,125 @@ html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
 </style>
 </head>
 <body>
-<div id="app"><div class="loading-screen">Loading library…</div></div>
+<div id="app">
+    <div id="navrail">
+      <div class="nav-brand">CALI.<br>AERIAL</div>
+      <button class="nav-btn active" data-nav="library"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>Library</button>
+      <button class="nav-btn" data-nav="goals"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="4"></circle><circle cx="12" cy="12" r="0.7" fill="currentColor"></circle></svg>Goals</button>
+      <button class="nav-btn" data-nav="sessions"><svg viewBox="0 0 24 24"><path d="M8 3h8a1 1 0 0 1 1 1v16l-5-3-5 3V4a1 1 0 0 1 1-1z"></path></svg>Sessions</button>
+      <div class="nav-footer">
+        <button class="nav-btn" id="btnExport" title="Save your library to a file"><svg viewBox="0 0 24 24"><path d="M12 3v11m0 0l-4-4m4 4l4-4"></path><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg>Export</button>
+        <button class="nav-btn" id="btnImport" title="Load a previously exported file"><svg viewBox="0 0 24 24"><path d="M12 20V9m0 0l-4 4m4-4l4 4"></path><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path></svg>Import</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      </div>
+    </div>
+    <div id="main">
+      <div id="topbar">
+        <div>
+          <h1 id="viewTitle">Exercise Library</h1>
+          <div class="subtitle" id="viewSubtitle">3 exercises tagged by physical quality</div>
+        </div>
+        <div id="topbarActions"><button class="btn btn-accent" id="btnAddExercise">+ Add Exercise</button></div>
+      </div>
+      <div id="saveNotice">This tool doesn't save on its own — click <strong>Export</strong> before closing, and <strong>Import</strong> that file next time to pick back up where you left off.</div>
+      <div id="viewroot">
+    <div id="filterbar">
+      <div class="filter-row">
+        <span class="tag-chip " data-tag="push" style="color:inherit">
+    <span class="dot" style="background:#C97B4A"></span>Pushing</span><span class="tag-chip " data-tag="pull" style="color:inherit">
+    <span class="dot" style="background:#4A8FA8"></span>Pulling</span><span class="tag-chip " data-tag="compression" style="color:inherit">
+    <span class="dot" style="background:#8C5A9E"></span>Compression</span><span class="tag-chip " data-tag="extension" style="color:inherit">
+    <span class="dot" style="background:#A98B3E"></span>Extension</span><span class="tag-chip " data-tag="core" style="color:inherit">
+    <span class="dot" style="background:#5E9E5A"></span>Core &amp; Body Control</span><span class="tag-chip " data-tag="joint" style="color:inherit">
+    <span class="dot" style="background:#6E7BC9"></span>Joint Stability</span><span class="tag-chip " data-tag="unilateral" style="color:inherit">
+    <span class="dot" style="background:#C96E8C"></span>Unilateral Strength</span><span class="tag-chip " data-tag="scapular" style="color:inherit">
+    <span class="dot" style="background:#3FA98F"></span>Scapular Control</span><span class="tag-chip " data-tag="shoulder" style="color:inherit">
+    <span class="dot" style="background:#C9954A"></span>Shoulder Control</span><span class="tag-chip " data-tag="hip" style="color:inherit">
+    <span class="dot" style="background:#9152C9"></span>Hip Control</span><span class="tag-chip " data-tag="spinal" style="color:inherit">
+    <span class="dot" style="background:#4AA8C9"></span>Spinal Control</span><span class="tag-chip " data-tag="flexibility" style="color:inherit">
+    <span class="dot" style="background:#7CAE45"></span>Active Flexibility</span><span class="tag-chip " data-tag="transitions" style="color:inherit">
+    <span class="dot" style="background:#AA9640"></span>Transitions &amp; Pathways</span><span class="tag-chip " data-tag="momentum" style="color:inherit">
+    <span class="dot" style="background:#C25E5E"></span>Momentum Control</span><span class="tag-chip " data-tag="micro" style="color:inherit">
+    <span class="dot" style="background:#5E8FC2"></span>Micro-Adjustments</span><span class="tag-chip " data-tag="efficiency" style="color:inherit">
+    <span class="dot" style="background:#9E8F6E"></span>Movement Efficiency</span><span class="tag-chip " data-tag="flow" style="color:inherit">
+    <span class="dot" style="background:#9E5E9E"></span>Flow &amp; Continuity</span>
+        
+      </div>
+      <div class="filter-row">
+        <input type="text" id="searchInput" placeholder="Search name, purpose, apparatus…" value="">
+        <select id="equipFilter"><option value="">Any equipment</option><option>Bodyweight</option><option>Rings</option><option>Parallettes</option><option>Resistance Band</option><option>Aerial Apparatus</option><option>Pulley / Cable</option><option>Free Weight</option><option>Wall</option><option>Partner-Assisted</option></select>
+        <select id="diffFilter"><option value="">Any difficulty</option><option>Foundation</option><option>Developing</option><option>Proficient</option><option>Advanced</option></select>
+      </div>
+    </div>
+    <div class="split">
+      <div class="list-pane" id="exList">
+    <div class="row-item selected" data-id="mu7gb1tb1dzakn">
+      <div class="row-title">Scapular CARs (Wall-Supported)</div>
+      <div class="row-meta"><span class="badge">Foundation</span><span class="tag-chip static " data-tag="scapular" style="color:#3FA98F">
+    <span class="dot" style="background:#3FA98F"></span>Scapular Control</span><span class="tag-chip static " data-tag="joint" style="color:#6E7BC9">
+    <span class="dot" style="background:#6E7BC9"></span>Joint Stability</span></div>
+    </div>
+    <div class="row-item " data-id="mu7gb1tbi9gjxc">
+      <div class="row-title">Tuck to Straddle Compression Hold</div>
+      <div class="row-meta"><span class="badge">Developing</span><span class="tag-chip static " data-tag="compression" style="color:#8C5A9E">
+    <span class="dot" style="background:#8C5A9E"></span>Compression</span><span class="tag-chip static " data-tag="core" style="color:#5E9E5A">
+    <span class="dot" style="background:#5E9E5A"></span>Core &amp; Body Control</span><span class="tag-chip static " data-tag="flexibility" style="color:#7CAE45">
+    <span class="dot" style="background:#7CAE45"></span>Active Flexibility</span></div>
+    </div>
+    <div class="row-item " data-id="mu7gb1tb1k6yz4">
+      <div class="row-title">Single-Arm Scap Pull-Up Progression</div>
+      <div class="row-meta"><span class="badge">Advanced</span><span class="tag-chip static " data-tag="pull" style="color:#4A8FA8">
+    <span class="dot" style="background:#4A8FA8"></span>Pulling</span><span class="tag-chip static " data-tag="unilateral" style="color:#C96E8C">
+    <span class="dot" style="background:#C96E8C"></span>Unilateral Strength</span><span class="tag-chip static " data-tag="scapular" style="color:#3FA98F">
+    <span class="dot" style="background:#3FA98F"></span>Scapular Control</span></div>
+    </div></div>
+      <div class="detail-pane" id="exDetail">
+    <div class="detail-header">
+      <div class="detail-title">Scapular CARs (Wall-Supported)</div>
+      <div class="detail-actions">
+        <button class="btn btn-sm" id="btnEditEx">Edit</button>
+        <button class="btn btn-sm btn-danger" id="btnDelEx">Delete</button>
+      </div>
+    </div>
+    <div class="detail-tags"><span class="tag-chip active" data-tag="scapular" style="color:#3FA98F">
+    <span class="dot" style="background:#3FA98F"></span>Scapular Control</span><span class="tag-chip active" data-tag="joint" style="color:#6E7BC9">
+    <span class="dot" style="background:#6E7BC9"></span>Joint Stability</span>
+      <span class="badge">Foundation</span>
+      <span class="badge">Bodyweight</span><span class="badge">Wall</span>
+    </div>
+    <div class="field-grid">
+      <div class="field-block"><div class="field-label">Aerial Relevance</div><div class="field-value ">Cross-Apparatus</div></div>
+      <div class="field-block"><div class="field-label">Difficulty</div><div class="field-value">Foundation</div></div>
+    </div>
+    <div class="field-block"><div class="field-label">What This Develops</div><div class="field-value">Builds active control of the shoulder blade through its full range, independent of the arm, so the shoulder girdle stops moving as a passive passenger.</div></div>
+    <div class="field-block"><div class="field-label">How To Perform</div><div class="field-value ">1. Stand facing a wall about an arm's length away, feet hip-width, palms flat on the wall at shoulder height. Elbows straight but not locked.
+2. Stack the ribs over the pelvis and brace lightly so the ribcage cannot flare. Keep the arms still for the whole rep.
+3. Move one shoulder blade in a slow circle: shrug up, glide forward around the ribcage, press down, then draw back. Take about 5 seconds per circle.
+4. Reverse the direction, then repeat on the other side.
+5. Do 5 circles each direction per side, 2 sets. Shorten the circle rather than letting the ribs or upper traps take over.</div></div>
+    <div class="field-block"><div class="field-label">What The Athlete Should Feel</div><div class="field-value">Slow, controlled circles that stay smooth. The shoulder should feel like it is drawing the circle, not being dragged by the ribcage or upper traps.</div></div>
+    <div class="field-block"><div class="field-label">Common Compensations</div><div class="field-value">Shrugging the traps, flaring the ribcage to fake range, rushing through the bottom of the circle where control usually breaks down.</div></div>
+    <div class="field-block"><div class="field-label">Transfer To The Apparatus</div><div class="field-value">Cleaner scapular positioning in inversions, extensions, and any overhead line — reduces the "collapsed shoulder" look in silks and hammock shapes.</div></div>
+    <div class="field-grid">
+      <div class="field-block"><div class="field-label">Progression</div><div class="field-value ">Progresses to: Scapular CARs on rings (unsupported) → Scapular pull-up holds.</div></div>
+      <div class="field-block"><div class="field-label">Regression</div><div class="field-value ">Regresses from: seated scapular retraction/protraction drill.</div></div>
+    </div>
+    
+    <div class="divider"></div>
+    <div class="field-block">
+      <div class="field-label">Add To A Session</div>
+      <select id="addToSessionSelect">
+        <option value="">Choose a session…</option>
+        
+        <option value="__new">+ New session</option>
+      </select>
+    </div>
+  </div>
+    </div>
+  </div>
+    </div>
+    <div id="modalHost"></div>
+  </div>
 
 <script>
 /* ===================== DATA MODEL ===================== */
@@ -808,5 +924,6 @@ function escapeAttr(str){ return escapeHTML(str).replace(/"/g,'&quot;'); }
   renderShell();
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>
